@@ -33,8 +33,9 @@ target_include_directories(imgui-glfw PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/gl3w/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glfw/include"
 )
+target_link_libraries(imgui-glfw PRIVATE imgui imgui-glfw glfw gl3w)
 
-add_executable(Template main.cpp include/Camera.hpp include/Event.hpp include/Mesh.hpp include/Window.hpp)
+add_executable(Template main.cpp include/Camera.hpp include/Event.hpp include/Mesh.hpp include/Window.hpp include/AppPlatform.hpp include/RenderContext.hpp include/utils/matches.hpp include/ImGuiLayer.hpp include/Application.hpp)
 target_include_directories(Template PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui"
@@ -42,4 +43,6 @@ target_include_directories(Template PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/gl3w/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glfw/include"
 )
+target_compile_definitions(Template PRIVATE -DGLFW_INCLUDE_NONE)
+
 target_link_libraries(Template PRIVATE imgui imgui-glfw glfw gl3w glm fmt)
