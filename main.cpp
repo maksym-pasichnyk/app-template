@@ -166,8 +166,8 @@ struct App : Application<App> {
         CreateUniforms();
         CreateRenderTargets(width, height);
 
-        auto vertex_source = AppPlatform::readFile("../resources/default.vert").value();
-        auto fragment_source = AppPlatform::readFile("../resources/default.frag").value();
+        auto vertex_source = AppPlatform::readFile("assets/default.vert").value();
+        auto fragment_source = AppPlatform::readFile("assets/default.frag").value();
 
         shader_handle = renderContext->createShader(vertex_source, fragment_source);
 
