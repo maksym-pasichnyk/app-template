@@ -2,9 +2,9 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <Event.hpp>
+#include <optional>
 #include <queue>
-
-#include "Event.hpp"
 
 struct Window {
     Window(const char* title, int width, int height) : _size(width, height) {
@@ -98,10 +98,6 @@ struct Window {
         }
         auto event = _frameEvents.front();
         return _frameEvents.pop(), event;
-    }
-
-    GLFWwindow* getNativeHandle() {
-        return _window;
     }
 
 private:

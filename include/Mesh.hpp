@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 struct VertexArrayAttrib {
     GLuint index;
     GLint size;
@@ -19,8 +21,8 @@ struct Mesh {
     GLuint ibo = GL_NONE;
     GLsizeiptr vbo_size = 0;
     GLsizeiptr ibo_size = 0;
-    int32_t index_count = 0;
-    int32_t vertex_count = 0;
+    size_t index_count = 0;
+    size_t vertex_count = 0;
     GLenum usage;
 
     Mesh(std::span<const VertexArrayAttrib> attributes, std::span<const VertexArrayBinding> bindings, GLsizei size, GLenum usage) : usage(usage) {
@@ -47,8 +49,8 @@ struct Mesh {
         glDeleteVertexArrays(1, &vao);
     }
 
-    template<typename _Type, size_t _Extent = std::dynamic_extent>
-    void setVertices(std::span<_Type, _Extent> vertices) {
+    template<typename T, size_t Extent = std::dynamic_extent>
+    void SetVertices(std::span<T, Extent> vertices) {
         vertex_count = vertices.size();
         if (vertices.size_bytes() > vbo_size) {
             vbo_size = vertices.size_bytes();
@@ -58,7 +60,8 @@ struct Mesh {
         }
     }
 
-    void setIndices(std::span<const int32_t> indices) {
+    template<typename T, size_t Extent = std::dynamic_extent>
+    void SetIndices(std::span<T, Extent> indices) {
         index_count = indices.size();
         if (indices.size_bytes() > ibo_size) {
             ibo_size = indices.size_bytes();

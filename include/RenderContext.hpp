@@ -1,10 +1,31 @@
 #pragma once
 
-#include <AppPlatform.hpp>
 #include <fmt/format.h>
 #include <string_view>
 #include <GL/gl3w.h>
 #include <string>
+
+struct RenderTarget {
+    glm::ivec2 size;
+    GLuint framebuffer;
+    GLuint color_attachment;
+    GLuint depth_attachment;
+
+    ~RenderTarget() {
+        if (color_attachment != 0) {
+            glDeleteTextures(1, &color_attachment);
+            color_attachment = 0;
+        }
+        if (depth_attachment != 0) {
+            glDeleteRenderbuffers(1, &depth_attachment);
+            depth_attachment = 0;
+        }
+        if (framebuffer != 0) {
+            glDeleteFramebuffers(1, &framebuffer);
+            depth_attachment = 0;
+        }
+    }
+};
 
 struct RenderContext {
     RenderContext() {
@@ -14,7 +35,7 @@ struct RenderContext {
         glDebugMessageCallback(debug, nullptr);
     }
 
-    static GLuint compileShader(const std::string& source, GLenum type) {
+    GLuint compileShader(std::string_view source, GLenum type) {
         auto data = source.data();
         auto size = GLint(source.size());
 
@@ -41,9 +62,9 @@ struct RenderContext {
         return shader;
     }
 
-    static GLuint createShader(const std::string& vertex_path, const std::string& fragment_path) {
-        auto vertex = compileShader(AppPlatform::readFile(vertex_path).value(), GL_VERTEX_SHADER);
-        auto fragment = compileShader(AppPlatform::readFile(fragment_path).value(), GL_FRAGMENT_SHADER);
+    GLuint createShader(std::string_view vertex_source, std::string_view fragment_source) {
+        auto vertex = compileShader(vertex_source, GL_VERTEX_SHADER);
+        auto fragment = compileShader(fragment_source, GL_FRAGMENT_SHADER);
 
         GLuint program = glCreateProgram();
         glAttachShader(program, vertex);
@@ -70,6 +91,47 @@ struct RenderContext {
             return 0;
         }
         return program;
+    }
+
+    GLuint createFramebuffer(GLuint color_attachment, GLuint depth_attachment) {
+        GLuint framebuffer;
+        glCreateFramebuffers(1, &framebuffer);
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, color_attachment, 0);
+        glNamedFramebufferRenderbuffer(framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_attachment);
+        return framebuffer;
+    }
+
+    GLuint createColorAttachment(int width, int height) {
+        GLuint color_attachment;
+        glCreateTextures(GL_TEXTURE_2D, 1, &color_attachment);
+        glTextureStorage2D(color_attachment, 1, GL_RGB8, width, height);
+        glTextureParameteri(color_attachment, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(color_attachment, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        return color_attachment;
+    }
+
+    GLuint createDepthAttachment(int width, int height) {
+        GLuint depth_attachment;
+        glCreateRenderbuffers(1, &depth_attachment);
+        glNamedRenderbufferStorage(depth_attachment, GL_DEPTH32F_STENCIL8, width, height);
+        return depth_attachment;
+    }
+
+    std::unique_ptr<RenderTarget> createRenderTarget(int width, int height) {
+        const auto color_attachment = createColorAttachment(width, height);
+        const auto depth_attachment = createDepthAttachment(width, height);
+        const auto framebuffer = createFramebuffer(color_attachment, depth_attachment);
+
+        if (glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            fmt::print("Framebuffer is not complete!: {}\n", glGetError());
+        }
+
+        auto renderTarget = std::make_unique<RenderTarget>();
+        renderTarget->size = {width, height};
+        renderTarget->framebuffer = framebuffer;
+        renderTarget->color_attachment = color_attachment;
+        renderTarget->depth_attachment = depth_attachment;
+        return renderTarget;
     }
 
 private:

@@ -14,13 +14,13 @@ concept HasHandleEvent = requires(T& self, const Event& e) {
 };
 
 template <typename T>
-concept HasUpdate = requires(T& self, double dt) {
+concept HasUpdate = requires(T& self, float dt) {
     { self.update(dt) } -> std::same_as<void>;
 };
 
 template <typename T>
-concept HasRenderFrame = requires(T& self) {
-    { self.renderFrame() } -> std::same_as<void>;
+concept HasRenderFrame = requires(T& self, float dt) {
+    { self.renderFrame(dt) } -> std::same_as<void>;
 };
 
 template <typename T>
@@ -50,15 +50,16 @@ struct Application {
         while (!window->shouldClose()) {
             const auto current_time = Clock::now();
             const auto delta_time = current_time - std::exchange(last_time, current_time);
+            const auto dt = std::chrono::duration<double>(delta_time).count();
 
             handleEvents();
 
             if constexpr (HasUpdate<T>) {
-                static_cast<T&>(*this).update(std::chrono::duration<double>(delta_time).count());
+                static_cast<T&>(*this).update(dt);
             }
 
             if constexpr (HasRenderFrame<T>) {
-                static_cast<T&>(*this).renderFrame();
+                static_cast<T &>(*this).renderFrame(dt);
             }
 
             window->swapBuffers();
